@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'dart:math' as math;
+import 'package:avatar_glow/avatar_glow.dart';
 
 void main() {
   runApp(const CareCompassApp());
@@ -133,14 +133,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                       ),
                     ),
                     const SizedBox(height: 32),
-                    const Text(
-                      'CerebrumAI',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1.5,
-                      ),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FlickeringText(
+                          text: 'Cerebrum',
+                          baseColor: Colors.white,
+                          flickerColor: Color(0xFF4AEDC4),
+                        ),
+                        FlickeringText(
+                          text: 'AI',
+                          baseColor: Color(0xFF4AEDC4),
+                          flickerColor: Colors.white,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Container(
@@ -168,7 +174,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 const Spacer(flex: 2),
                 // Description
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E2B3D).withOpacity(0.3),
                     borderRadius: BorderRadius.circular(20),
@@ -176,13 +182,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                       color: const Color(0xFF4AEDC4).withOpacity(0.2),
                       width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4AEDC4).withOpacity(0.15),
+                        blurRadius: 20,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                   child: const Text(
                     'Advanced AI-powered medical diagnosis system for accurate and efficient healthcare solutions',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white70,
+                      color: Colors.white,
                       height: 1.5,
                     ),
                   ),
@@ -251,6 +264,41 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       ),
     );
   }
+}
+
+class Particle {
+  final double x = Random().nextDouble();
+  final double y = Random().nextDouble();
+  final double size = Random().nextDouble() * 2 + 1;
+  final double speed = Random().nextDouble() * 0.2 + 0.1;
+}
+
+class ParticlePainter extends CustomPainter {
+  final List<Particle> particles;
+  final double progress;
+
+  ParticlePainter({required this.particles, required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    for (final particle in particles) {
+      final x = (particle.x + progress * particle.speed) % 1.0;
+      final y = (particle.y + progress * particle.speed * 0.5) % 1.0;
+      
+      canvas.drawCircle(
+        Offset(x * size.width, y * size.height),
+        particle.size,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(ParticlePainter oldDelegate) => true;
 }
 
 // Add HyperspaceAnimation class at the top level
@@ -480,14 +528,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
-                          'Welcome Back',
+                        const ShimmerGradientText(
+                          text: 'Welcome Back',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         const Text(
@@ -1053,7 +1099,7 @@ class _InputSelectionScreenState extends State<InputSelectionScreen> with Single
     super.dispose();
   }
 
-  void _navigateToInputScreens() {
+  void _navigateToInputScreens() async {
     if (!_isTextSelected && !_isImageSelected && !_isVoiceSelected) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1064,111 +1110,64 @@ class _InputSelectionScreenState extends State<InputSelectionScreen> with Single
       return;
     }
 
-    // Navigate to the first selected screen
-    if (_isTextSelected) {
-      Navigator.push(
+    // Helper function for navigation with transition
+    Future<void> navigateWithTransition(Widget screen, {bool isResultsScreen = false}) async {
+      await Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const TextInputScreen(),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => screen,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final begin = isResultsScreen 
+                ? const Offset(1.0, 0.0)  // Right to left for Results
+                : const Offset(0.0, 1.0); // Bottom to top for Input screens
+            const end = Offset.zero;
+            const curve = Curves.easeInOut;
+            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var offsetAnimation = animation.drive(tween);
+            return SlideTransition(position: offsetAnimation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 600), // Slightly longer duration
+          reverseTransitionDuration: const Duration(milliseconds: 600),
+          opaque: false,
         ),
-      ).then((_) {
+      );
+    }
+
+    try {
+      if (_isTextSelected) {
+        await navigateWithTransition(const TextInputScreen());
+        
         if (_isImageSelected) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ImageInputScreen(),
-            ),
-          ).then((_) {
-            if (_isVoiceSelected) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const VoiceInputScreen(),
-                ),
-              ).then((_) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ResultsScreen(),
-                  ),
-                );
-              });
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ResultsScreen(),
-                ),
-              );
-            }
-          });
+          await navigateWithTransition(const ImageInputScreen());
+          
+          if (_isVoiceSelected) {
+            await navigateWithTransition(const VoiceInputScreen());
+            await navigateWithTransition(const ResultsScreen(), isResultsScreen: true);
+          } else {
+            await navigateWithTransition(const ResultsScreen(), isResultsScreen: true);
+          }
         } else if (_isVoiceSelected) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const VoiceInputScreen(),
-            ),
-          ).then((_) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ResultsScreen(),
-              ),
-            );
-          });
+          await navigateWithTransition(const VoiceInputScreen());
+          await navigateWithTransition(const ResultsScreen(), isResultsScreen: true);
         } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ResultsScreen(),
-            ),
-          );
+          await navigateWithTransition(const ResultsScreen(), isResultsScreen: true);
         }
-      });
-    } else if (_isImageSelected) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ImageInputScreen(),
-        ),
-      ).then((_) {
+      } else if (_isImageSelected) {
+        await navigateWithTransition(const ImageInputScreen());
+        
         if (_isVoiceSelected) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const VoiceInputScreen(),
-            ),
-          ).then((_) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ResultsScreen(),
-              ),
-            );
-          });
+          await navigateWithTransition(const VoiceInputScreen());
+          await navigateWithTransition(const ResultsScreen(), isResultsScreen: true);
         } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ResultsScreen(),
-            ),
-          );
+          await navigateWithTransition(const ResultsScreen(), isResultsScreen: true);
         }
-      });
-    } else if (_isVoiceSelected) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const VoiceInputScreen(),
-        ),
-      ).then((_) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ResultsScreen(),
-          ),
-        );
-      });
+      } else if (_isVoiceSelected) {
+        await navigateWithTransition(const VoiceInputScreen());
+        await navigateWithTransition(const ResultsScreen(), isResultsScreen: true);
+      }
+    } catch (e) {
+      // Handle any navigation errors gracefully
+      debugPrint('Navigation error: $e');
     }
   }
 
@@ -1473,20 +1472,30 @@ class _TextInputScreenState extends State<TextInputScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Describe Your Symptoms',
+              const ShimmerGradientText(
+                text: 'Describe Your Symptoms',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Please provide detailed information about your symptoms, including when they started and how they affect you.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E2B3D).withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Text(
+                  'Please provide detailed information about your symptoms',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -1496,17 +1505,31 @@ class _TextInputScreenState extends State<TextInputScreen> {
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: _hasError ? Colors.red : Colors.white.withOpacity(0.2),
-                    width: 1,
+                    color: _hasError ? Colors.red : const Color(0xFF4AEDC4).withOpacity(0.3),
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4AEDC4).withOpacity(0.1),
+                      blurRadius: 20,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
                 child: TextField(
                   controller: _textController,
-                  maxLines: 10,
-                  style: const TextStyle(color: Colors.white),
+                  maxLines: 8,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Type your symptoms here...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 16,
+                    ),
                     border: InputBorder.none,
                     errorText: _hasError ? 'Please enter your symptoms' : null,
                     errorStyle: const TextStyle(color: Colors.red),
@@ -1519,45 +1542,84 @@ class _TextInputScreenState extends State<TextInputScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              Container(
-                height: 55,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF4AEDC4),
-                      Color(0xFF1E2B3D),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF4B39EF).withOpacity(0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                      spreadRadius: 1,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Cross Button
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.red.shade400,
+                          Colors.red.shade700,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(35),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.red.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: _handleSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          _textController.clear();
+                          setState(() => _hasError = false);
+                        },
+                        borderRadius: BorderRadius.circular(35),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 35,
+                        ),
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Submit',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  const SizedBox(width: 40),
+                  // Tick Button
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF4AEDC4),
+                          Color(0xFF2A9D8F),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(35),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _handleSubmit,
+                        borderRadius: BorderRadius.circular(35),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 35,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -1578,19 +1640,56 @@ class ImageInputScreen extends StatefulWidget {
 class _ImageInputScreenState extends State<ImageInputScreen> {
   bool _hasImage = false;
   bool _hasError = false;
+  bool _isScanning = false;
+  final List<String> _images = [];
 
   void _handleSubmit() {
-    if (!_hasImage) {
+    if (!_hasImage && _images.isEmpty) {
       setState(() => _hasError = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please upload an image before proceeding'),
+          content: Text('Please upload at least one image before proceeding'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
     Navigator.pop(context);
+  }
+
+  void _handleImageTap() async {
+    setState(() {
+      _hasImage = true;
+      _hasError = false;
+      _isScanning = true;
+    });
+    
+    // Simulate scanning process
+    await Future.delayed(const Duration(seconds: 3));
+    
+    if (mounted) {
+      setState(() {
+        _isScanning = false;
+        if (!_images.contains('https://placeholder.com/medical-image')) {
+          _images.add('https://placeholder.com/medical-image');
+        }
+      });
+    }
+  }
+
+  void _handleAddMoreImages() {
+    setState(() {
+      _images.add('https://placeholder.com/medical-image');
+    });
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+      if (_images.isEmpty) {
+        _hasImage = false;
+      }
+    });
   }
 
   @override
@@ -1611,12 +1710,11 @@ class _ImageInputScreenState extends State<ImageInputScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Upload Medical Images',
+              const ShimmerGradientText(
+                text: 'Upload Medical Images',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
@@ -1629,50 +1727,179 @@ class _ImageInputScreenState extends State<ImageInputScreen> {
               ),
               const SizedBox(height: 32),
               GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _hasImage = true;
-                    _hasError = false;
-                  });
-                },
+                onTap: _handleImageTap,
                 child: Container(
-                  height: 200,
+                  height: 300,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: const Color(0xFF1E2B3D).withOpacity(0.3),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: _hasError ? Colors.red : Colors.white.withOpacity(0.2),
+                      color: _hasError ? Colors.red : const Color(0xFF4AEDC4).withOpacity(0.2),
                       width: 1,
                     ),
                   ),
-                  child: _hasImage
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.network(
-                            'https://placeholder.com/medical-image',
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_upload,
-                              size: 64,
-                              color: Colors.white.withOpacity(0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Tap to upload image',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white.withOpacity(0.5),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: ScanningFrame(
+                      isScanning: _isScanning,
+                      child: _hasImage
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                'https://placeholder.com/medical-image',
+                                fit: BoxFit.cover,
                               ),
-                            ),
-                          ],
-                        ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.black.withOpacity(0.5),
+                                      Colors.transparent,
+                                      Colors.transparent,
+                                      Colors.black.withOpacity(0.5),
+                                    ],
+                                    stops: const [0.0, 0.2, 0.8, 1.0],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 64,
+                                color: const Color(0xFF4AEDC4).withOpacity(0.5),
+                              ),
+                              const SizedBox(height: 16),
+                              const ShimmerGradientText(
+                                text: 'Tap to capture or upload image',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 24),
+              
+              // Additional Images Section
+              if (_images.isNotEmpty || _hasImage)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4, bottom: 12),
+                      child: Text(
+                        'Additional Images',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 100,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          // Add More Button
+                          GestureDetector(
+                            onTap: _handleAddMoreImages,
+                            child: Container(
+                              width: 100,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E2B3D).withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF4AEDC4).withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    color: const Color(0xFF4AEDC4).withOpacity(0.7),
+                                    size: 32,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Add More',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Image Thumbnails
+                          ..._images.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final image = entry.value;
+                            return Container(
+                              width: 100,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF4AEDC4).withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(
+                                      image,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () => _removeImage(index),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              
               if (_hasError)
                 const Padding(
                   padding: EdgeInsets.only(top: 8.0),
@@ -1742,27 +1969,47 @@ class VoiceInputScreen extends StatefulWidget {
 }
 
 class _VoiceInputScreenState extends State<VoiceInputScreen> {
-  final bool _isRecording = false;
-  bool _hasRecording = false;
-  bool _hasError = false;
+  bool _isRecording = false;
+  String _recordingText = '';
+  final List<String> _sampleTexts = [
+    'I have been experiencing severe headache and dizziness for the past two days.',
+    'My throat is sore and I have a mild fever since yesterday.',
+    'I feel shortness of breath when climbing stairs.',
+    'I have a persistent cough and runny nose.',
+  ];
 
-  void _handleSubmit() {
-    if (!_hasRecording) {
-      setState(() => _hasError = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please record your voice before proceeding'),
-          backgroundColor: Colors.red,
+  void _startRecording() {
+    setState(() {
+      _isRecording = true;
+      _recordingText = '';
+    });
+  }
+
+  void _stopRecording() {
+    if (_isRecording) {
+      setState(() {
+        _isRecording = false;
+        // Simulate voice recording by selecting a random sample text
+        _recordingText = _sampleTexts[Random().nextInt(_sampleTexts.length)];
+      });
+    }
+  }
+
+  void _resetRecording() {
+    setState(() {
+      _recordingText = '';
+    });
+  }
+
+  void _confirmRecording() {
+    if (_recordingText.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ResultsScreen(),
         ),
       );
-      return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ResultsScreen(),
-      ),
-    );
   }
 
   @override
@@ -1777,126 +2024,382 @@ class _VoiceInputScreenState extends State<VoiceInputScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Voice Description',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF101520),
+                  const Color(0xFF1E2B3D).withOpacity(0.8),
+                ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Record your voice describing your symptoms. Speak clearly and provide as much detail as possible.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 32),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _hasRecording = true;
-                    _hasError = false;
-                  });
-                },
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _hasError ? Colors.red : Colors.white.withOpacity(0.2),
-                      width: 1,
+            ),
+          ),
+          
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  const ShimmerGradientText(
+                    text: 'Voice Description',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _hasRecording ? Icons.play_circle : Icons.mic,
-                        size: 64,
-                        color: _isRecording ? const Color(0xFFEE1E82) : Colors.white.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _isRecording
-                            ? 'Recording...'
-                            : _hasRecording
-                                ? 'Tap to play recording'
-                                : 'Tap to start recording',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white.withOpacity(0.5),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isRecording 
+                      ? 'Recording your voice...'
+                      : _recordingText.isEmpty 
+                        ? 'Press and hold the microphone button to start recording your symptoms'
+                        : 'Review your recorded description. Press the green button to proceed or the red button to record again.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Text Display Area
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                          width: 1,
                         ),
                       ),
+                      child: SingleChildScrollView(
+                        child: _recordingText.isEmpty 
+                          ? ShimmerGradientText(
+                              text: 'Your recording will appear here...',
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.white.withOpacity(0.3),
+                                height: 1.5,
+                              ),
+                            )
+                          : Text(
+                              _recordingText,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                color: Colors.white,
+                                height: 1.5,
+                              ),
+                            ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Control Buttons Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Cross Button (Reset)
+                      if (_recordingText.isNotEmpty)
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.red.withOpacity(0.8),
+                                Colors.red.shade900,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.3),
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _resetRecording,
+                              borderRadius: BorderRadius.circular(35),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 35,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      
+                      // Microphone Button with Glow Effect
+                      AvatarGlow(
+                        animate: _isRecording,
+                        endRadius: 75.0,
+                        glowColor: const Color(0xFF4AEDC4),
+                        duration: const Duration(milliseconds: 2000),
+                        repeatPauseDuration: const Duration(milliseconds: 100),
+                        repeat: true,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Orbital Animation
+                            if (!_isRecording) OrbitalAnimation(isRecording: _isRecording),
+                            
+                            // Microphone Button
+                            GestureDetector(
+                              onTapDown: (details) => _startRecording(),
+                              onTapUp: (details) => _stopRecording(),
+                              onTapCancel: () => _stopRecording(),
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      _isRecording 
+                                        ? const Color(0xFF4AEDC4)
+                                        : const Color(0xFF1E2B3D),
+                                      _isRecording
+                                        ? const Color(0xFF1E2B3D)
+                                        : const Color(0xFF4AEDC4),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  _isRecording ? Icons.mic : Icons.mic_none,
+                                  color: Colors.white,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Tick Button (Confirm)
+                      if (_recordingText.isNotEmpty)
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF4AEDC4),
+                                Color(0xFF2A9D8F),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _confirmRecording,
+                              borderRadius: BorderRadius.circular(35),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 35,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
-                ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Instructions Text
+                  if (_recordingText.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Color(0xFF4AEDC4),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Tap ✓ to confirm or × to record again',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-              if (_hasError)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Please record your voice',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 32),
-              Container(
-                height: 55,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF4AEDC4),
-                      Color(0xFF1E2B3D),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF4B39EF).withOpacity(0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: _handleSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Submit',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+}
+
+// Add this new widget before the VoiceInputScreen class
+class OrbitalAnimation extends StatefulWidget {
+  final bool isRecording;
+  
+  const OrbitalAnimation({
+    super.key,
+    required this.isRecording,
+  });
+
+  @override
+  State<OrbitalAnimation> createState() => _OrbitalAnimationState();
+}
+
+class _OrbitalAnimationState extends State<OrbitalAnimation> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // Outer orbit
+            Transform.rotate(
+              angle: _controller.value * 2 * pi,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF4AEDC4).withOpacity(0.2),
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+            // Middle orbit
+            Transform.rotate(
+              angle: -_controller.value * 2 * pi * 1.5,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+            // Inner orbit
+            Transform.rotate(
+              angle: _controller.value * 2 * pi * 2,
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF4AEDC4).withOpacity(0.4),
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+            // Orbital dots
+            ...List.generate(3, (index) {
+              final angle = _controller.value * 2 * pi + (index * 2 * pi / 3);
+              const radius = 80.0;
+              final x = cos(angle) * radius;
+              final y = sin(angle) * radius;
+              return Transform.translate(
+                offset: Offset(x, y),
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4AEDC4),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4AEDC4).withOpacity(0.5),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        );
+      },
     );
   }
 }
@@ -2864,17 +3367,18 @@ class _EKGAnimationState extends State<EKGAnimation> with SingleTickerProviderSt
   late AnimationController _controller;
   final List<double> _ekgPoints = [];
   double _currentX = 0;
+  final int _totalPoints = 150;  // Increased points for smoother animation
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10), // Increased from 8 seconds to 10 seconds
+      duration: const Duration(seconds: 3),  // Faster animation for more realistic effect
     )..repeat();
 
     // Initialize EKG points
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < _totalPoints; i++) {
       _ekgPoints.add(0.0);
     }
   }
@@ -2885,43 +3389,54 @@ class _EKGAnimationState extends State<EKGAnimation> with SingleTickerProviderSt
     super.dispose();
   }
 
+  // Generate a single EKG beat pattern
+  double _generateEKGPoint(double x) {
+    // Normalize x to 0-1 range for one complete beat
+    double normalizedX = (x % 0.4); // Reduced from 1.0 to 0.4 to show more peaks
+    
+    // Initial flat segment
+    if (normalizedX < 0.04) {
+      return 0.0;
+    }
+    // Sharp upward spike (R wave)
+    else if (normalizedX < 0.06) {
+      return 1.5 * (normalizedX - 0.04) / 0.02;  // Sharp upward line
+    }
+    // Sharp downward spike (S wave)
+    else if (normalizedX < 0.08) {
+      return 1.5 - 3.0 * (normalizedX - 0.06) / 0.02;  // Sharp downward line
+    }
+    // Return to baseline with small bump
+    else if (normalizedX < 0.10) {
+      return -1.5 + 1.8 * (normalizedX - 0.08) / 0.02;  // Return to baseline
+    }
+    // Small secondary wave
+    else if (normalizedX < 0.14) {
+      return 0.3 * sin((normalizedX - 0.10) * pi * 10);
+    }
+    // Flat baseline until next beat
+    else {
+      return 0.0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 300,
+      height: 100,
       color: Colors.transparent,
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
           // Update EKG points
-          _currentX += 0.02;
+          _currentX += 0.008; // Slightly faster to match more frequent peaks
           if (_currentX > 1.0) {
             _currentX = 0.0;
           }
-          
-          // Generate EKG pattern
-          double y = 0.0;
-          if (_currentX < 0.2) {
-            y = 0.0;
-          } else if (_currentX < 0.3) {
-            y = 1.0;
-          } else if (_currentX < 0.4) {
-            y = -0.5;
-          } else if (_currentX < 0.5) {
-            y = 0.5;
-          } else if (_currentX < 0.6) {
-            y = 0.0;
-          } else if (_currentX < 0.7) {
-            y = -0.5;
-          } else if (_currentX < 0.8) {
-            y = 0.5;
-          } else {
-            y = 0.0;
-          }
 
           _ekgPoints.removeAt(0);
-          _ekgPoints.add(y);
+          _ekgPoints.add(_generateEKGPoint(_currentX));
 
           return CustomPaint(
             painter: EKGPainter(
@@ -2948,55 +3463,60 @@ class EKGPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 2.0
+      ..strokeWidth = 2.5  // Slightly thicker line
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
 
     final path = Path();
     final width = size.width;
     final height = size.height;
     final pointWidth = width / points.length;
+    final midHeight = height / 2;
 
-    // Draw grid lines
+    // Draw the EKG line
+    path.moveTo(0, midHeight + (points[0] * height / 4));
+    
+    for (int i = 1; i < points.length; i++) {
+      final x = i * pointWidth;
+      final y = midHeight + (points[i] * height / 4);
+      path.lineTo(x, y);  // Using lineTo for sharper peaks instead of quadratic curves
+    }
+
+    // Add subtle glow effect
+    final glowPaint = Paint()
+      ..color = color.withOpacity(0.2)
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+    
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, paint);
+
+    // Draw grid lines with very low opacity
     final gridPaint = Paint()
-      ..color = color.withOpacity(0.1)
+      ..color = color.withOpacity(0.05)
       ..strokeWidth = 1.0;
 
     // Vertical grid lines
-    for (int i = 0; i < 10; i++) {
-      final x = width * (i / 10);
+    for (int i = 0; i < width; i += 20) {
       canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, height),
+        Offset(i.toDouble(), 0),
+        Offset(i.toDouble(), height),
         gridPaint,
       );
     }
 
     // Horizontal grid lines
-    for (int i = 0; i < 5; i++) {
-      final y = height * (i / 5);
+    for (int i = 0; i < height; i += 20) {
       canvas.drawLine(
-        Offset(0, y),
-        Offset(width, y),
+        Offset(0, i.toDouble()),
+        Offset(width, i.toDouble()),
         gridPaint,
       );
     }
-
-    // Draw EKG line
-    path.moveTo(0, height / 2);
-    for (int i = 0; i < points.length; i++) {
-      final x = i * pointWidth;
-      final y = height / 2 - points[i] * height / 4;
-      path.lineTo(x, y);
-    }
-
-    // Add glow effect
-    final glowPaint = Paint()
-      ..color = color.withOpacity(0.3)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    canvas.drawPath(path, glowPaint);
-
-    // Draw main line
-    canvas.drawPath(path, paint);
   }
 
   @override
@@ -3004,3 +3524,570 @@ class EKGPainter extends CustomPainter {
     return oldDelegate.points != points || oldDelegate.color != color;
   }
 }
+
+// Add this new painter class at the bottom of the file
+class NeonLinePainter extends CustomPainter {
+  final Color color;
+
+  NeonLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withOpacity(0.15)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 2);
+
+    // Draw diagonal lines
+    for (int i = 0; i < 5; i++) {
+      final path = Path();
+      path.moveTo(size.width * (i / 4), 0);
+      path.lineTo(size.width * ((i + 1) / 4), size.height);
+      canvas.drawPath(path, paint);
+    }
+
+    // Draw horizontal lines
+    for (int i = 0; i < 4; i++) {
+      final path = Path();
+      path.moveTo(0, size.height * (i / 3));
+      path.lineTo(size.width, size.height * (i / 3));
+      canvas.drawPath(path, paint);
+    }
+
+    // Draw glowing dots at intersections
+    final dotPaint = Paint()
+      ..color = color.withOpacity(0.3)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    for (int i = 0; i < 5; i++) {
+      for (int j = 0; j < 4; j++) {
+        canvas.drawCircle(
+          Offset(
+            size.width * (i / 4),
+            size.height * (j / 3),
+          ),
+          2,
+          dotPaint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant NeonLinePainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
+class AnimatedNeonBox extends StatefulWidget {
+  final Widget child;
+  
+  const AnimatedNeonBox({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  State<AnimatedNeonBox> createState() => _AnimatedNeonBoxState();
+}
+
+class _AnimatedNeonBoxState extends State<AnimatedNeonBox> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _glowAnimation = Tween<double>(
+      begin: 0.1,
+      end: 0.3,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _glowAnimation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2B3D).withOpacity(0.3),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFF4AEDC4).withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              // Primary glow
+              BoxShadow(
+                color: const Color(0xFF4AEDC4).withOpacity(_glowAnimation.value),
+                blurRadius: 20,
+                spreadRadius: 1,
+              ),
+              // Secondary pulsing glow
+              BoxShadow(
+                color: const Color(0xFF4AEDC4).withOpacity(_glowAnimation.value * 0.5),
+                blurRadius: 30,
+                spreadRadius: 2,
+              ),
+              // Outer ambient glow
+              BoxShadow(
+                color: const Color(0xFF4AEDC4).withOpacity(_glowAnimation.value * 0.25),
+                blurRadius: 40,
+                spreadRadius: 4,
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Background sparkle effects
+              Positioned(
+                top: -20,
+                right: -20,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF4AEDC4).withOpacity(_glowAnimation.value),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -30,
+                left: -30,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF4AEDC4).withOpacity(_glowAnimation.value * 0.5),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Animated neon lines
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: NeonLinePainter(
+                    color: const Color(0xFF4AEDC4),
+                  ),
+                ),
+              ),
+              // Main content with padding
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: widget.child,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Add this new widget class before the AnimatedNeonBox class
+class FlickeringText extends StatefulWidget {
+  final String text;
+  final Color baseColor;
+  final Color flickerColor;
+
+  const FlickeringText({
+    super.key,
+    required this.text,
+    required this.baseColor,
+    required this.flickerColor,
+  });
+
+  @override
+  State<FlickeringText> createState() => _FlickeringTextState();
+}
+
+class _FlickeringTextState extends State<FlickeringText> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _flickerAnimation;
+  late Animation<double> _sizeAnimation;
+  final Random _random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    _flickerAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 45.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 45.0,
+      ),
+      TweenSequenceItem(
+        tween: ConstantTween<double>(0.0),
+        weight: 10.0,
+      ),
+    ]).animate(_controller);
+
+    _sizeAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.1)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 50.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.1, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 50.0,
+      ),
+    ]).animate(_controller);
+
+    _startRandomAnimation();
+  }
+
+  void _startRandomAnimation() {
+    Future.delayed(Duration(milliseconds: _random.nextInt(2000) + 1000), () {
+      if (mounted) {
+        _controller.forward(from: 0.0).then((_) {
+          if (mounted) {
+            _startRandomAnimation();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _sizeAnimation.value,
+          child: Text(
+            widget.text,
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: Color.lerp(
+                widget.baseColor,
+                widget.flickerColor,
+                _flickerAnimation.value,
+              ),
+              shadows: [
+                Shadow(
+                  color: widget.flickerColor.withOpacity(_flickerAnimation.value * 0.7),
+                  blurRadius: 10,
+                  offset: const Offset(0, 0),
+                ),
+                Shadow(
+                  color: widget.flickerColor.withOpacity(_flickerAnimation.value * 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 0),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Add this new widget class before the AnimatedNeonBox class
+class ShimmerGradientText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+
+  const ShimmerGradientText({
+    super.key,
+    required this.text,
+    required this.style,
+  });
+
+  @override
+  State<ShimmerGradientText> createState() => _ShimmerGradientTextState();
+}
+
+class _ShimmerGradientTextState extends State<ShimmerGradientText> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return ShaderMask(
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              colors: const [
+                Color(0xFF4AEDC4),  // Teal
+                Colors.white,
+                Color(0xFF4AEDC4),  // Teal
+              ],
+              stops: const [0.0, 0.5, 1.0],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              transform: GradientRotation(_animation.value * 2 * pi),
+            ).createShader(bounds);
+          },
+          child: Stack(
+            children: [
+              // Shadow layer
+              Transform.translate(
+                offset: const Offset(2, 2),
+                child: Text(
+                  widget.text,
+                  style: widget.style.copyWith(
+                    color: Colors.black12,
+                  ),
+                ),
+              ),
+              // Main text
+              Text(
+                widget.text,
+                style: widget.style.copyWith(
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: const Color(0xFF4AEDC4).withOpacity(0.5),
+                      blurRadius: 8,
+                      offset: const Offset(0, 0),
+                    ),
+                    Shadow(
+                      color: Colors.white.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ScanningFrame extends StatefulWidget {
+  final bool isScanning;
+  final Widget child;
+
+  const ScanningFrame({
+    super.key,
+    required this.isScanning,
+    required this.child,
+  });
+
+  @override
+  State<ScanningFrame> createState() => _ScanningFrameState();
+}
+
+class _ScanningFrameState extends State<ScanningFrame> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Main content
+        widget.child,
+
+        // Corner brackets
+        ...List.generate(4, (index) {
+          final isTop = index < 2;
+          final isLeft = index.isEven;
+          return Positioned(
+            top: isTop ? 0 : null,
+            bottom: !isTop ? 0 : null,
+            left: isLeft ? 0 : null,
+            right: !isLeft ? 0 : null,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: isTop ? Colors.white : Colors.transparent,
+                    width: 3,
+                  ),
+                  bottom: BorderSide(
+                    color: !isTop ? Colors.white : Colors.transparent,
+                    width: 3,
+                  ),
+                  left: BorderSide(
+                    color: isLeft ? Colors.white : Colors.transparent,
+                    width: 3,
+                  ),
+                  right: BorderSide(
+                    color: !isLeft ? Colors.white : Colors.transparent,
+                    width: 3,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+
+        // Scanning animation
+        if (widget.isScanning)
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return Positioned(
+                top: _animation.value * 300,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        const Color(0xFF4AEDC4).withOpacity(0.8),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4AEDC4).withOpacity(0.5),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+        // "Scanning..." text
+        if (widget.isScanning)
+          Positioned(
+            top: 10,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: const Color(0xFF4AEDC4).withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.search,
+                      color: Color(0xFF4AEDC4),
+                      size: 16,
+                    ),
+                    SizedBox(width: 6),
+                    ShimmerGradientText(
+                      text: 'SCANNING...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
