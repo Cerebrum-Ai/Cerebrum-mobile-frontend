@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
 import 'screens/welcome_screen.dart';
+import 'providers/user_provider.dart';
+import 'screens/signup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,17 +15,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
-    return MaterialApp(
-            title: 'Cerebrum AI',
-            theme: themeProvider.currentTheme,
-      debugShowCheckedModeBanner: false,
-      home: const WelcomeScreen(),
-          );
-        },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: ChangeNotifierProvider(
+        create: (_) => ThemeProvider(),
+        child: Consumer<ThemeProvider>(
+          builder: (context, themeProvider, _) {
+            return MaterialApp(
+              title: 'Cerebrum AI',
+              theme: themeProvider.currentTheme,
+              debugShowCheckedModeBanner: false,
+              home: const WelcomeScreen(),
+            );
+          },
+        ),
       ),
     );
   }
