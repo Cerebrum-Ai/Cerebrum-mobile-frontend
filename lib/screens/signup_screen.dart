@@ -154,43 +154,56 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  void _completeSignup() {
+  Future<void> _completeSignup() async {
     if (_formKey.currentState!.validate()) {
-      final user = UserModel(
-        email: _controllers['email']!.text,
-        password: _controllers['password']!.text,
-        firstName: _controllers['firstName']!.text,
-        lastName: _controllers['lastName']!.text,
-        dateOfBirth: _controllers['dateOfBirth']!.text,
-        phone: _controllers['phone']!.text,
-        gender: _controllers['gender']!.text,
-        height: _controllers['height']!.text,
-        weight: _controllers['weight']!.text,
-        bloodType: _controllers['bloodType']!.text,
-        chronicConditions: _controllers['chronicConditions']!.text,
-        conditions: _controllers['conditions']!.text,
-        medications: _controllers['medications']!.text,
-        allergies: _controllers['allergies']!.text,
-        familyHistory: _controllers['familyHistory']!.text,
-        smokingStatus: _controllers['smokingStatus']!.text,
-        alcoholConsumption: _controllers['alcoholConsumption']!.text,
-        physicalActivity: _controllers['physicalActivity']!.text,
-        sleepHours: _controllers['sleepHours']!.text,
-        diet: _controllers['diet']!.text,
-        occupation: _controllers['occupation']!.text,
-        stressLevel: _controllers['stressLevel']!.text,
-        hobbies: _controllers['hobbies']!.text,
-      );
+      try {
+        final userData = {
+          'firstName': _controllers['firstName']!.text,
+          'lastName': _controllers['lastName']!.text,
+          'dateOfBirth': _controllers['dateOfBirth']!.text,
+          'phone': _controllers['phone']!.text,
+          'gender': _controllers['gender']!.text,
+          'height': _controllers['height']!.text,
+          'weight': _controllers['weight']!.text,
+          'bloodType': _controllers['bloodType']!.text,
+          'chronicConditions': _controllers['chronicConditions']!.text,
+          'conditions': _controllers['conditions']!.text,
+          'medications': _controllers['medications']!.text,
+          'allergies': _controllers['allergies']!.text,
+          'familyHistory': _controllers['familyHistory']!.text,
+          'smokingStatus': _controllers['smokingStatus']!.text,
+          'alcoholConsumption': _controllers['alcoholConsumption']!.text,
+          'physicalActivity': _controllers['physicalActivity']!.text,
+          'sleepHours': _controllers['sleepHours']!.text,
+          'diet': _controllers['diet']!.text,
+          'occupation': _controllers['occupation']!.text,
+          'stressLevel': _controllers['stressLevel']!.text,
+          'hobbies': _controllers['hobbies']!.text,
+        };
 
-      // Save user data
-      Provider.of<UserProvider>(context, listen: false).setUser(user);
+        await Provider.of<UserProvider>(context, listen: false).signUp(
+          email: _controllers['email']!.text,
+          password: _controllers['password']!.text,
+          userData: userData,
+        );
 
-      // Navigate to home screen
-      Navigator.pushAndRemoveUntil(
-        context,
-        HomeScreen.route(),
-        (route) => false, // Remove all previous routes
-      );
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            HomeScreen.route(),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Signup failed: ${e.toString()}'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 

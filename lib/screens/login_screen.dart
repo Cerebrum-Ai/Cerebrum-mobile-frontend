@@ -50,44 +50,30 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement actual authentication logic here
-      // For now, we'll just create a dummy user
-      final user = UserModel(
-        email: _emailController.text,
-        password: _passwordController.text,
-        firstName: '',
-        lastName: '',
-        dateOfBirth: '',
-        phone: '',
-        gender: '',
-        height: '',
-        weight: '',
-        bloodType: '',
-        chronicConditions: '',
-        conditions: '',
-        medications: '',
-        allergies: '',
-        familyHistory: '',
-        smokingStatus: '',
-        alcoholConsumption: '',
-        physicalActivity: '',
-        sleepHours: '',
-        diet: '',
-        occupation: '',
-        stressLevel: '',
-        hobbies: '',
-      );
+      try {
+        await Provider.of<UserProvider>(context, listen: false).signIn(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
 
-      // Save user data
-      Provider.of<UserProvider>(context, listen: false).setUser(user);
-
-      // Navigate to home screen
-      Navigator.pushReplacement(
-        context,
-        HomeScreen.route(),
-      );
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            HomeScreen.route(),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login failed: ${e.toString()}'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 

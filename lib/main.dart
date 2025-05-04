@@ -4,9 +4,14 @@ import 'theme_provider.dart';
 import 'screens/welcome_screen.dart';
 import 'providers/user_provider.dart';
 import 'screens/signup_screen.dart';
+import 'config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  await SupabaseConfig.initialize();
+  
   runApp(const MyApp());
 }
 
