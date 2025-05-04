@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
+import '../components/review_submit.dart';
 import 'profile_screen.dart';
 import 'home_screen.dart';
 
@@ -65,7 +66,7 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    if (_currentStep < 3) {
+    if (_currentStep < 4) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -810,6 +811,38 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  Widget _buildReviewSubmitStep() {
+    final formData = {
+      'email': _controllers['email']!.text,
+      'password': _controllers['password']!.text,
+      'firstName': _controllers['firstName']!.text,
+      'lastName': _controllers['lastName']!.text,
+      'dateOfBirth': _controllers['dateOfBirth']!.text,
+      'gender': _controllers['gender']!.text,
+      'height': _controllers['height']!.text,
+      'weight': _controllers['weight']!.text,
+      'bloodType': _controllers['bloodType']!.text,
+      'allergies': _controllers['allergies']!.text,
+      'medications': _controllers['medications']!.text,
+      'conditions': _controllers['conditions']!.text,
+      'familyHistory': _controllers['familyHistory']!.text,
+      'smokingStatus': _controllers['smokingStatus']!.text,
+      'alcoholConsumption': _controllers['alcoholConsumption']!.text,
+      'physicalActivity': _controllers['physicalActivity']!.text,
+      'sleepHours': _controllers['sleepHours']!.text,
+      'diet': _controllers['diet']!.text,
+      'occupation': _controllers['occupation']!.text,
+      'stressLevel': _controllers['stressLevel']!.text,
+      'hobbies': _controllers['hobbies']!.text,
+    };
+
+    return ReviewSubmit(
+      formData: formData,
+      prevStep: _previousStep,
+      handleSubmit: _completeSignup,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -877,12 +910,19 @@ class _SignupScreenState extends State<SignupScreen> {
                     isCompleted: _currentStep > 3,
                     isCurrent: _currentStep == 3,
                   ),
+                  _buildStepIndicator(
+                    context,
+                    step: 5,
+                    title: 'Review',
+                    isCompleted: _currentStep > 4,
+                    isCurrent: _currentStep == 4,
+                  ),
                 ],
               ),
             ),
             // Progress Bar
             LinearProgressIndicator(
-              value: (_currentStep + 1) / 4,
+              value: (_currentStep + 1) / 5,
               backgroundColor: theme.colorScheme.surface,
               valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
@@ -895,26 +935,28 @@ class _SignupScreenState extends State<SignupScreen> {
                   _buildPersonalInfoStep(),
                   _buildMedicalInfoStep(),
                   _buildLifestyleInfoStep(),
+                  _buildReviewSubmitStep(),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (_currentStep > 0)
+            if (_currentStep < 4)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (_currentStep > 0)
+                      ElevatedButton(
+                        onPressed: _previousStep,
+                        child: const Text('Previous'),
+                      ),
                     ElevatedButton(
-                      onPressed: _previousStep,
-                      child: const Text('Previous'),
+                      onPressed: _nextStep,
+                      child: const Text('Next'),
                     ),
-                  ElevatedButton(
-                    onPressed: _currentStep == 3 ? _completeSignup : _nextStep,
-                    child: Text(_currentStep == 3 ? 'Complete' : 'Next'),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -929,7 +971,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required bool isCurrent,
   }) {
     final theme = Theme.of(context);
-    final size = 32.0;
+    const size = 32.0;
 
     return Column(
       children: [
