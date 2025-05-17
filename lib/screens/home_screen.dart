@@ -46,6 +46,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void _onAnalysisComplete(AnalysisResult result) {
     _session.addResult(result);
     if (_selectedTypes.isEmpty) {
+      // Gather raw user input from all results
+      String? question;
+      String? image;
+      String? audio;
+      for (var res in _session.results) {
+        if (res.type == 'text' && res.data['rawText'] != null && (res.data['rawText'] as String).isNotEmpty) {
+          question = res.data['rawText'];
+        }
+        if (res.type == 'image' && res.data['imagePaths'] != null && (res.data['imagePaths'] as List).isNotEmpty) {
+          image = (res.data['imagePaths'] as List).first;
+        }
+        if (res.type == 'voice' && res.data['audioPath'] != null && (res.data['audioPath'] as String?)?.isNotEmpty == true) {
+          audio = res.data['audioPath'];
+        }
+      }
       Navigator.pushReplacement(
         context,
         _createSlideRoute(
@@ -53,14 +68,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             result: AnalysisResult(
               type: 'combined',
               data: {
-                'summary': 'Combined analysis complete. Here are the results from all analyses.',
-                'details': _session.results.expand((result) =>
-                  (result.data['details'] as List).map((detail) => {
-                    'description': '${result.type.toUpperCase()}: ${detail['description']}',
-                    'value': detail['value'],
-                  })
-                ).toList(),
-                'individualResults': _session.results.map((r) => r.data).toList(),
+                if (question != null) 'question': question,
+                if (image != null) 'image': image,
+                if (audio != null) 'audio': audio,
               },
             ),
           ),

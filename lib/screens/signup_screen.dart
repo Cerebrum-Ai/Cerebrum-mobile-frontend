@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import '../components/review_submit.dart';
 import 'profile_screen.dart';
@@ -213,14 +212,11 @@ class _SignupScreenState extends State<SignupScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Email',
+            icon: Icons.email_outlined,
+            theme: Theme.of(context),
             controller: _controllers['email'],
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              hintText: 'Enter your email address',
-              prefixIcon: Icon(Icons.email_outlined),
-            ),
-            keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
@@ -232,13 +228,11 @@ class _SignupScreenState extends State<SignupScreen> {
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Password',
+            icon: Icons.lock_outline,
+            theme: Theme.of(context),
             controller: _controllers['password'],
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              hintText: 'Enter your password (min. 6 characters)',
-              prefixIcon: Icon(Icons.lock_outline),
-            ),
             obscureText: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -268,13 +262,11 @@ class _SignupScreenState extends State<SignupScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          TextFormField(
+          _GlassTextField(
+            hintText: 'First Name',
+            icon: Icons.person_outline,
+            theme: Theme.of(context),
             controller: _controllers['firstName'],
-            decoration: const InputDecoration(
-              labelText: 'First Name',
-              hintText: 'Enter your first name',
-              prefixIcon: Icon(Icons.person_outline),
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your first name';
@@ -283,13 +275,11 @@ class _SignupScreenState extends State<SignupScreen> {
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Last Name',
+            icon: Icons.person_outline,
+            theme: Theme.of(context),
             controller: _controllers['lastName'],
-            decoration: const InputDecoration(
-              labelText: 'Last Name',
-              hintText: 'Enter your last name',
-              prefixIcon: Icon(Icons.person_outline),
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your last name';
@@ -298,13 +288,11 @@ class _SignupScreenState extends State<SignupScreen> {
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Date of Birth',
+            icon: Icons.calendar_today_outlined,
+            theme: Theme.of(context),
             controller: _controllers['dateOfBirth'],
-            decoration: const InputDecoration(
-              labelText: 'Date of Birth',
-              hintText: 'DD-MM-YYYY',
-              prefixIcon: Icon(Icons.calendar_today_outlined),
-            ),
             readOnly: true,
             onTap: () async {
               final DateTime? picked = await showDatePicker(
@@ -342,13 +330,11 @@ class _SignupScreenState extends State<SignupScreen> {
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Phone Number',
+            icon: Icons.phone_outlined,
+            theme: Theme.of(context),
             controller: _controllers['phone'],
-            decoration: const InputDecoration(
-              labelText: 'Phone Number',
-              hintText: 'Enter your phone number',
-              prefixIcon: Icon(Icons.phone_outlined),
-            ),
             keyboardType: TextInputType.phone,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -423,15 +409,12 @@ class _SignupScreenState extends State<SignupScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Height',
+            icon: Icons.height,
+            theme: Theme.of(context),
             controller: _controllers['height'],
-            decoration: const InputDecoration(
-              labelText: 'Height',
-              hintText: 'Enter your height in cm',
-              prefixIcon: Icon(Icons.height),
-              suffixText: 'cm',
-            ),
-            keyboardType: TextInputType.number,
+            suffixText: 'cm',
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your height';
@@ -443,15 +426,12 @@ class _SignupScreenState extends State<SignupScreen> {
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Weight',
+            icon: Icons.monitor_weight_outlined,
+            theme: Theme.of(context),
             controller: _controllers['weight'],
-            decoration: const InputDecoration(
-              labelText: 'Weight',
-              hintText: 'Enter your weight in kg',
-              prefixIcon: Icon(Icons.monitor_weight_outlined),
-              suffixText: 'kg',
-            ),
-            keyboardType: TextInputType.number,
+            suffixText: 'kg',
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your weight';
@@ -511,49 +491,39 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Chronic Conditions (Optional)',
+            icon: Icons.medical_services_outlined,
+            theme: Theme.of(context),
             controller: _controllers['chronicConditions'],
-            decoration: const InputDecoration(
-              labelText: 'Chronic Conditions (Optional)',
-              hintText: 'Enter any chronic conditions',
-              prefixIcon: Icon(Icons.medical_services_outlined),
-            ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Current Conditions (Optional)',
+            icon: Icons.medical_services_outlined,
+            theme: Theme.of(context),
             controller: _controllers['conditions'],
-            decoration: const InputDecoration(
-              labelText: 'Current Conditions (Optional)',
-              hintText: 'Enter any current conditions',
-              prefixIcon: Icon(Icons.medical_services_outlined),
-            ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Medications (Optional)',
+            icon: Icons.medication_outlined,
+            theme: Theme.of(context),
             controller: _controllers['medications'],
-            decoration: const InputDecoration(
-              labelText: 'Medications (Optional)',
-              hintText: 'Enter any medications',
-              prefixIcon: Icon(Icons.medication_outlined),
-            ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Allergies (Optional)',
+            icon: Icons.warning_amber_outlined,
+            theme: Theme.of(context),
             controller: _controllers['allergies'],
-            decoration: const InputDecoration(
-              labelText: 'Allergies (Optional)',
-              hintText: 'Enter any allergies',
-              prefixIcon: Icon(Icons.warning_amber_outlined),
-            ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Family History (Optional)',
+            icon: Icons.family_restroom_outlined,
+            theme: Theme.of(context),
             controller: _controllers['familyHistory'],
-            decoration: const InputDecoration(
-              labelText: 'Family History (Optional)',
-              hintText: 'Enter any relevant family history',
-              prefixIcon: Icon(Icons.family_restroom_outlined),
-            ),
           ),
         ],
       ),
@@ -698,15 +668,12 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Sleep Hours',
+            icon: Icons.bedtime_outlined,
+            theme: Theme.of(context),
             controller: _controllers['sleepHours'],
-            decoration: const InputDecoration(
-              labelText: 'Sleep Hours',
-              hintText: 'Enter average hours of sleep per night',
-              prefixIcon: Icon(Icons.bedtime_outlined),
-              suffixText: 'hours',
-            ),
-            keyboardType: TextInputType.number,
+            suffixText: 'hours',
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your sleep hours';
@@ -718,13 +685,11 @@ class _SignupScreenState extends State<SignupScreen> {
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Diet',
+            icon: Icons.restaurant_outlined,
+            theme: Theme.of(context),
             controller: _controllers['diet'],
-            decoration: const InputDecoration(
-              labelText: 'Diet',
-              hintText: 'Enter your dietary preferences',
-              prefixIcon: Icon(Icons.restaurant_outlined),
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your diet information';
@@ -733,13 +698,11 @@ class _SignupScreenState extends State<SignupScreen> {
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Occupation',
+            icon: Icons.work_outline,
+            theme: Theme.of(context),
             controller: _controllers['occupation'],
-            decoration: const InputDecoration(
-              labelText: 'Occupation',
-              hintText: 'Enter your occupation',
-              prefixIcon: Icon(Icons.work_outline),
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your occupation';
@@ -792,13 +755,11 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          _GlassTextField(
+            hintText: 'Hobbies',
+            icon: Icons.sports_esports_outlined,
+            theme: Theme.of(context),
             controller: _controllers['hobbies'],
-            decoration: const InputDecoration(
-              labelText: 'Hobbies',
-              hintText: 'Enter your hobbies and interests',
-              prefixIcon: Icon(Icons.sports_esports_outlined),
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your hobbies';
@@ -1033,14 +994,26 @@ class _GlassTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final TextInputType keyboardType;
   final ThemeData theme;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final String? suffixText;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final Function(String)? onChanged;
 
   const _GlassTextField({
     required this.hintText,
     required this.icon,
     required this.theme,
     this.obscureText = false,
-    this.suffixIcon,
     this.keyboardType = TextInputType.text,
+    this.controller,
+    this.validator,
+    this.suffixText,
+    this.suffixIcon, // <-- Add this line
+    this.readOnly = false,
+    this.onTap,
+    this.onChanged,
   });
 
   @override
@@ -1061,9 +1034,14 @@ class _GlassTextField extends StatelessWidget {
           width: 1.1,
         ),
       ),
-      child: TextField(
+      child: TextFormField(
+        controller: controller,
+        validator: validator,
         obscureText: obscureText,
         keyboardType: keyboardType,
+        readOnly: readOnly,
+        onTap: onTap,
+        onChanged: onChanged,
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -1072,6 +1050,7 @@ class _GlassTextField extends StatelessWidget {
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: theme.colorScheme.primary),
           suffixIcon: suffixIcon,
+          suffixText: suffixText,
           hintText: hintText,
           hintStyle: TextStyle(
             color: theme.colorScheme.primary.withOpacity(0.5),
@@ -1180,4 +1159,34 @@ class _AnimatedGradientButtonState extends State<_AnimatedGradientButton>
       ),
     );
   }
-} 
+}
+
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const SignupScreen(),
+    );
+  }
+}
+
+void flutterRun() {
+  runApp(const MyApp());
+}

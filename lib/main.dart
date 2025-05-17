@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'theme_provider.dart';
 import 'screens/welcome_screen.dart';
 import 'providers/user_provider.dart';
-import 'screens/signup_screen.dart';
 import 'config/supabase_config.dart';
 
 void main() async {
@@ -13,7 +12,7 @@ void main() async {
   await SupabaseConfig.initialize();
   
   runApp(const MyApp());
-}
+}  
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -41,3 +40,4 @@ class MyApp extends StatelessWidget {
   }
 }
 
+  

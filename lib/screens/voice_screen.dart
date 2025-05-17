@@ -90,6 +90,7 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
               }
             ],
             'recordingDuration': _recordingDuration,
+            'audioPath': null, // TODO: Set this to the actual audio file path or URL if available
           },
         );
         widget.onComplete(result);
